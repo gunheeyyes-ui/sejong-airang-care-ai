@@ -112,10 +112,7 @@ a {
 }
 
 .panel {
-  background: #ffffff;
-  border: 1px solid #dbe0d8;
-  border-radius: 8px;
-  padding: 24px;
+  padding: 10px 0 32px;
 }
 
 .panel-heading {
@@ -146,9 +143,9 @@ a {
 
 .recommendation-form,
 .qa-form {
-  border: 1px solid #dfe5dc;
-  border-radius: 8px;
-  padding: 18px;
+  background: #ffffff;
+  border-top: 3px solid #1f6f5b;
+  padding: 18px 0 0;
 }
 
 .form-header {
@@ -360,13 +357,12 @@ a {
 
 .answer-block,
 .safety-block {
-  border: 1px solid #dbe1d8;
-  border-radius: 8px;
-  padding: 16px;
+  border-top: 1px solid #dbe1d8;
+  padding: 16px 0 0;
 }
 
 .safety-block {
-  background: #fff7ed;
+  background: transparent;
   border-color: #efd2b5;
 }
 
@@ -453,9 +449,8 @@ a {
 }
 
 .dashboard-lists section {
-  border: 1px solid #dbe1d8;
-  border-radius: 8px;
-  padding: 16px;
+  border-top: 1px solid #dbe1d8;
+  padding: 16px 0 0;
 }
 
 .rank-list {
