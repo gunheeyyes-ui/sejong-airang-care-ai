@@ -6,6 +6,7 @@ export function explainRecommendation(
   score: FacilityScore
 ): string[] {
   const reasons: string[] = [];
+  const cautions: string[] = [];
   const matched = new Set(score.matchedConditions);
 
   if (matched.has('age-fit')) {
@@ -21,11 +22,13 @@ export function explainRecommendation(
   if (preferences.needsNursingRoom && facility.nursingRoom === 'available') {
     reasons.push('수유실 이용 가능 정보가 있어 영아 외출 조건에 맞는 편입니다.');
   } else if (preferences.needsNursingRoom && facility.nursingRoom === 'limited') {
-    reasons.push('수유 공간은 제한적으로 안내되어 있어 방문 전 확인이 필요합니다.');
+    cautions.push('수유 공간은 제한적으로 안내되어 있어 보호자가 방문 전 이용 가능 여부를 확인해 주세요.');
   }
 
   if (preferences.needsDiaperStation && facility.diaperStation === 'available') {
     reasons.push('기저귀 교체 시설 정보가 있어 짧은 외출 준비에 도움이 됩니다.');
+  } else if (preferences.needsDiaperStation && facility.diaperStation === 'limited') {
+    cautions.push('기저귀 교체 공간은 제한적으로 안내되어 있어 여분 준비 후 방문 전 확인해 주세요.');
   }
 
   if (preferences.strollerType === 'twin' && facility.strollerAccessibility === 'twin') {
@@ -62,5 +65,7 @@ export function explainRecommendation(
     reasons.push('입력한 조건과 일부 항목이 맞는 후보로 볼 수 있습니다.');
   }
 
-  return reasons.slice(0, 6);
+  cautions.push('방문 전 공식 링크 또는 전화로 운영 시간과 편의시설 이용 가능 여부를 확인해 주세요.');
+
+  return [...reasons.slice(0, Math.max(0, 6 - cautions.length)), ...cautions];
 }

@@ -108,4 +108,85 @@ describe('recommendation engine', () => {
     expect(result.reasons.every((reason) => /[가-힣]/.test(reason))).toBe(true);
     expect(result.reasons.join(' ')).not.toMatch(/보장|반드시/);
   });
+
+  it('filters out age-incompatible facilities so they cannot be recommended', () => {
+    const preferences = normalizePreferences({ ageMonths: 8 });
+
+    const filtered = filterFacilities(sampleFacilities, preferences);
+    const results = rankFacilities(sampleFacilities, { ageMonths: 8 }, 10);
+
+    expect(filtered.map((facility) => facility.id)).not.toEqual(
+      expect.arrayContaining([
+        'facility-national-childrens-museum',
+        'facility-presidential-archives-childrens-experience'
+      ])
+    );
+    expect(results.map((result) => result.facility.id)).not.toEqual(
+      expect.arrayContaining([
+        'facility-national-childrens-museum',
+        'facility-presidential-archives-childrens-experience'
+      ])
+    );
+  });
+
+  it('filters out non-twin stroller facilities only when a twin stroller is required', () => {
+    const twinPreferences = normalizePreferences({
+      ageMonths: 8,
+      strollerType: 'twin',
+      needsDiaperStation: false
+    });
+    const singlePreferences = normalizePreferences({
+      ageMonths: 8,
+      strollerType: 'single',
+      needsDiaperStation: false
+    });
+    const candidates = [sampleFacilities[0], sampleFacilities[3]];
+
+    const twinFiltered = filterFacilities(candidates, twinPreferences);
+    const singleFiltered = filterFacilities(candidates, singlePreferences);
+
+    expect(twinFiltered.map((facility) => facility.id)).toEqual(['facility-goun-community-center']);
+    expect(singleFiltered.map((facility) => facility.id)).toEqual([
+      'facility-dodam-community-center',
+      'facility-goun-community-center'
+    ]);
+  });
+
+  it('includes an official confirmation caution in every recommendation result', () => {
+    const results = rankFacilities(sampleFacilities, {
+      ageMonths: 8,
+      lifeZone: '고운동',
+      strollerType: 'twin',
+      needsNursingRoom: true,
+      needsDiaperStation: true,
+      indoorPreferred: true
+    });
+
+    expect(results.length).toBeGreaterThan(0);
+    expect(
+      results.every((result) =>
+        result.reasons.some((reason) => reason.includes('방문 전') && /공식 링크|전화/.test(reason))
+      )
+    ).toBe(true);
+  });
+
+  it('adds parent-facing caution when a required diaper station is limited but allowed', () => {
+    const [result] = rankFacilities(
+      [sampleFacilities[9]],
+      {
+        ageMonths: 8,
+        lifeZone: '호수공원권',
+        weather: 'clear',
+        fineDust: 'good',
+        strollerType: 'twin',
+        needsDiaperStation: true,
+        indoorPreferred: false
+      },
+      1
+    );
+
+    expect(result).toBeDefined();
+    expect(result.reasons.join(' ')).toMatch(/기저귀.*제한|제한.*기저귀/);
+    expect(result.reasons.join(' ')).toMatch(/방문 전/);
+  });
 });

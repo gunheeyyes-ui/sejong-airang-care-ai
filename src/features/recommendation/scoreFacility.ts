@@ -59,6 +59,31 @@ const timeBandWindows: Record<TimeBand, { startsAt: string; endsAt: string }> = 
   evening: { startsAt: '17:00', endsAt: '21:00' }
 };
 
+const scoreWeights = {
+  ageExact: 22,
+  ageRangeOnly: 18,
+  ageNearBase: 8,
+  ageDistancePenalty: 1.5,
+  lifeZoneDefault: 6,
+  lifeZoneExact: 20,
+  lifeZoneNearby: 10,
+  lifeZoneOther: 2,
+  nursingRequired: 10,
+  nursingOptional: 3,
+  diaperRequired: 8,
+  diaperOptional: 3,
+  stroller: 14,
+  indoorPreferred: 12,
+  indoorOptional: 4,
+  weather: 14,
+  fineDust: 18,
+  lowFineDustPenalty: 14,
+  mediumVeryBadFineDustPenalty: 3,
+  timeOpen: 12,
+  timePartial: 4,
+  managementMinimum: 6
+} as const;
+
 function addCondition(
   condition: ConditionKey,
   target: 'matched' | 'missing',
@@ -81,12 +106,16 @@ function isNearbyLifeZone(a: LifeZone, b: LifeZone): boolean {
 }
 
 function scoreAgeFit(facility: Facility, preferences: NormalizedCarePreferences): number {
-  if (facility.ageBands.includes(preferences.ageBand) && preferences.ageMonths >= facility.ageRangeMonths.min && preferences.ageMonths <= facility.ageRangeMonths.max) {
-    return 22;
+  if (
+    facility.ageBands.includes(preferences.ageBand) &&
+    preferences.ageMonths >= facility.ageRangeMonths.min &&
+    preferences.ageMonths <= facility.ageRangeMonths.max
+  ) {
+    return scoreWeights.ageExact;
   }
 
   if (preferences.ageMonths >= facility.ageRangeMonths.min && preferences.ageMonths <= facility.ageRangeMonths.max) {
-    return 18;
+    return scoreWeights.ageRangeOnly;
   }
 
   const distance =
@@ -94,23 +123,23 @@ function scoreAgeFit(facility: Facility, preferences: NormalizedCarePreferences)
       ? facility.ageRangeMonths.min - preferences.ageMonths
       : preferences.ageMonths - facility.ageRangeMonths.max;
 
-  return Math.max(0, 8 - distance * 1.5);
+  return Math.max(0, scoreWeights.ageNearBase - distance * scoreWeights.ageDistancePenalty);
 }
 
 function scoreLifeZoneFit(facility: Facility, preferences: NormalizedCarePreferences): number {
   if (preferences.lifeZone === '기타') {
-    return 6;
+    return scoreWeights.lifeZoneDefault;
   }
 
   if (facility.lifeZone === preferences.lifeZone) {
-    return 20;
+    return scoreWeights.lifeZoneExact;
   }
 
   if (isNearbyLifeZone(facility.lifeZone, preferences.lifeZone)) {
-    return 10;
+    return scoreWeights.lifeZoneNearby;
   }
 
-  return 2;
+  return scoreWeights.lifeZoneOther;
 }
 
 function scoreAmenity(status: FacilityAmenityStatus): number {
@@ -210,14 +239,14 @@ function scoreCost(facility: Facility, costPreference: CostPreference): number {
 }
 
 function scoreFineDustSuitability(level: SuitabilityLevel, fineDust: FineDustLevel): number {
-  const base = suitabilityScore[level] * 18;
+  const base = suitabilityScore[level] * scoreWeights.fineDust;
 
   if ((fineDust === 'bad' || fineDust === 'very-bad') && level === 'low') {
-    return base - 14;
+    return base - scoreWeights.lowFineDustPenalty;
   }
 
   if (fineDust === 'very-bad' && level === 'medium') {
-    return base - 3;
+    return base - scoreWeights.mediumVeryBadFineDustPenalty;
   }
 
   return base;
@@ -244,14 +273,14 @@ export function scoreFacility(
   const nursingScore = scoreAmenity(facility.nursingRoom);
   const diaperScore = scoreAmenity(facility.diaperStation);
   const amenityFit =
-    nursingScore * (preferences.needsNursingRoom ? 10 : 3) +
-    diaperScore * (preferences.needsDiaperStation ? 8 : 3);
+    nursingScore * (preferences.needsNursingRoom ? scoreWeights.nursingRequired : scoreWeights.nursingOptional) +
+    diaperScore * (preferences.needsDiaperStation ? scoreWeights.diaperRequired : scoreWeights.diaperOptional);
 
   addCondition('nursing-room', nursingScore > 0 ? 'matched' : 'missing', matchedConditions, missingConditions);
   addCondition('diaper-station', diaperScore > 0 ? 'matched' : 'missing', matchedConditions, missingConditions);
 
   const strollerFit = scoreStrollerAccessibility(facility.strollerAccessibility, preferences.strollerType);
-  const accessibilityFit = strollerFit * 14 + parkingScore[facility.parking.availability];
+  const accessibilityFit = strollerFit * scoreWeights.stroller + parkingScore[facility.parking.availability];
   addCondition(
     'stroller-accessibility',
     strollerFit >= 1 || preferences.strollerType === 'none' ? 'matched' : 'missing',
@@ -260,8 +289,10 @@ export function scoreFacility(
   );
   addCondition('parking', parkingScore[facility.parking.availability] > 0 ? 'matched' : 'missing', matchedConditions, missingConditions);
 
-  const indoorFit = suitabilityScore[facility.indoorSuitability] * (preferences.indoorPreferred ? 12 : 4);
-  const weatherFit = suitabilityScore[facility.weatherSuitability[preferences.weather]] * 14;
+  const indoorFit =
+    suitabilityScore[facility.indoorSuitability] *
+    (preferences.indoorPreferred ? scoreWeights.indoorPreferred : scoreWeights.indoorOptional);
+  const weatherFit = suitabilityScore[facility.weatherSuitability[preferences.weather]] * scoreWeights.weather;
   const fineDustFit = scoreFineDustSuitability(
     facility.fineDustSuitability[preferences.fineDust],
     preferences.fineDust
@@ -292,7 +323,9 @@ export function scoreFacility(
 
   const openForTimeBand = isOpenForTimeBand(facility, preferences);
   const hasDayType = facility.openingHours.some((openingHour) => openingHour.dayType === preferences.dayType);
-  const timeFit = (openForTimeBand ? 12 : hasDayType ? 4 : 0) + reservationScore[facility.reservationRequirement];
+  const timeFit =
+    (openForTimeBand ? scoreWeights.timeOpen : hasDayType ? scoreWeights.timePartial : 0) +
+    reservationScore[facility.reservationRequirement];
   addCondition('day-type-fit', hasDayType ? 'matched' : 'missing', matchedConditions, missingConditions);
   addCondition('time-band-fit', openForTimeBand ? 'matched' : 'missing', matchedConditions, missingConditions);
   addCondition(
@@ -306,7 +339,12 @@ export function scoreFacility(
   addCondition('cost', costFit > 0 ? 'matched' : 'missing', matchedConditions, missingConditions);
 
   const managementFit = managementTrustScore[facility.managementScope];
-  addCondition('management-scope', managementFit >= 6 ? 'matched' : 'missing', matchedConditions, missingConditions);
+  addCondition(
+    'management-scope',
+    managementFit >= scoreWeights.managementMinimum ? 'matched' : 'missing',
+    matchedConditions,
+    missingConditions
+  );
 
   const total =
     ageFit +
