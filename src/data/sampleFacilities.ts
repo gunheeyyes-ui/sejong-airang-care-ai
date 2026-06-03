@@ -263,8 +263,8 @@ export const sampleFacilities: Facility[] = [
     parking: { availability: 'available', notes: '공원 주차장 혼잡도와 보행 거리를 확인하세요.' },
     cost: { type: 'free', amountDescription: '공원 이용은 무료 기준입니다.' },
     openingHours: [
-      { dayType: 'weekday', opensAt: '00:00', closesAt: '24:00', notes: '야간 안전과 시설 운영 시간 별도 확인' },
-      { dayType: 'weekend', opensAt: '00:00', closesAt: '24:00', notes: '행사 시 동선 혼잡 가능' }
+      { dayType: 'weekday', opensAt: '00:00', closesAt: '23:59', notes: '야간 안전과 시설 운영 시간 별도 확인' },
+      { dayType: 'weekend', opensAt: '00:00', closesAt: '23:59', notes: '행사 시 동선 혼잡 가능' }
     ],
     phone: '044-000-0010',
     reservationRequirement: 'not-required',

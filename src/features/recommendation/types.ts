@@ -30,7 +30,9 @@ export type WeatherCondition = 'clear' | 'rain' | 'snow' | 'heatwave';
 
 export type FineDustLevel = 'good' | 'moderate' | 'bad' | 'very-bad';
 
-export type TimeBand = 'morning' | 'afternoon' | 'evening' | 'weekend';
+export type TimeBand = 'morning' | 'afternoon' | 'evening';
+
+export type DayType = 'weekday' | 'weekend' | 'holiday';
 
 export type StrollerType = 'none' | 'single' | 'twin';
 
@@ -52,13 +54,29 @@ export type ManagementScope =
 
 export type CostPreference = 'free-only' | 'low-cost-ok' | 'any';
 
+export type ConditionKey =
+  | 'age-fit'
+  | 'life-zone-fit'
+  | 'time-band-fit'
+  | 'day-type-fit'
+  | 'nursing-room'
+  | 'diaper-station'
+  | 'stroller-accessibility'
+  | 'indoor-suitability'
+  | 'weather-suitability'
+  | 'fine-dust-suitability'
+  | 'parking'
+  | 'cost'
+  | 'reservation'
+  | 'management-scope';
+
 export interface AgeRangeMonths {
   min: number;
   max: number;
 }
 
 export interface OpeningHours {
-  dayType: 'weekday' | 'weekend' | 'holiday';
+  dayType: DayType;
   opensAt: string;
   closesAt: string;
   notes?: string;
@@ -103,6 +121,7 @@ export interface CarePreferenceInput {
   ageMonths?: number;
   lifeZone?: LifeZone;
   timeBand?: TimeBand;
+  dayType?: DayType;
   weather?: WeatherCondition;
   fineDust?: FineDustLevel;
   strollerType?: StrollerType;
@@ -117,6 +136,7 @@ export interface NormalizedCarePreferences {
   ageBand: AgeBand;
   lifeZone: LifeZone;
   timeBand: TimeBand;
+  dayType: DayType;
   weather: WeatherCondition;
   fineDust: FineDustLevel;
   strollerType: StrollerType;
@@ -137,8 +157,8 @@ export interface FacilityScore {
   timeFit: number;
   costFit: number;
   managementFit: number;
-  matchedConditions: string[];
-  missingConditions: string[];
+  matchedConditions: ConditionKey[];
+  missingConditions: ConditionKey[];
 }
 
 export interface RecommendationResult {
