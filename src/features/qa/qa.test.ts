@@ -68,4 +68,31 @@ describe('official information Q&A', () => {
       expect(answer.safetyNotice).toContain(medicalNotice);
     }
   );
+
+  it('instructs immediate 119 신고/전화 or medical institution contact for emergency escalation', () => {
+    const answer = buildAnswer('아이가 호흡곤란이 있어요. 어떻게 해야 하나요?', sampleOfficialInfo);
+    const actionText = answer.recommendedActions.join(' ');
+
+    expect(answer.requiresEmergencyEscalation).toBe(true);
+    expect(actionText).toMatch(/즉시.*(119.*(신고|전화)|의료기관.*(연락|문의|방문|내원|확인))/);
+    expect(actionText).not.toContain('119 안내를 우선 확인');
+  });
+
+  it.each(['응급', '구급', '신고'])(
+    'classifies %s as emergency and requires escalation',
+    (keyword) => {
+      const question = `아이에게 ${keyword} 상황이 있어 공식 안내가 필요해요`;
+      const answer = buildAnswer(question, sampleOfficialInfo);
+
+      expect(classifyQuestion(question)).toBe('emergency');
+      expect(answer.category).toBe('emergency');
+      expect(answer.requiresEmergencyEscalation).toBe(true);
+    }
+  );
+
+  it('does not return unrelated childcare first for broad official guide questions', () => {
+    const sources = searchOfficialInfo('세종시 공식 안내 알려주세요', sampleOfficialInfo);
+
+    expect(sources).toEqual([]);
+  });
 });

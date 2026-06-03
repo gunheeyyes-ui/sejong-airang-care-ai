@@ -1,19 +1,8 @@
 import type { OfficialAnswer, OfficialInfoSource } from './types';
-import { classifyQuestion } from './classifyQuestion';
+import { classifyQuestion, hasEmergencyKeyword } from './classifyQuestion';
 import { searchOfficialInfo } from './searchOfficialInfo';
 
 const medicalSafetyNotice = '이 서비스는 의료 진단이나 치료 조언을 제공하지 않습니다.';
-const emergencyKeywords = ['호흡곤란', '숨을 못', '숨못', '숨이 안', '경련', '의식', '119', '응급', '위급', '실신'];
-
-function normalize(value: string): string {
-  return value.toLocaleLowerCase('ko-KR').replace(/\s+/g, '');
-}
-
-function hasEmergencyKeyword(question: string): boolean {
-  const normalizedQuestion = normalize(question);
-
-  return emergencyKeywords.some((keyword) => normalizedQuestion.includes(normalize(keyword)));
-}
 
 function getAnswerSummary(category: OfficialAnswer['category'], matchedSources: OfficialInfoSource[]): string {
   const leadSource = matchedSources[0];
@@ -44,12 +33,12 @@ function getRecommendedActions(
 
   if (category === 'health-warning' || category === 'emergency') {
     const actions = [
-      '증상 판단은 공식 안내와 보호자의 관찰 정보를 바탕으로 의료기관 또는 119 등 공적 창구에 확인하세요.',
+      '증상 판단은 공식 안내와 보호자의 관찰 정보를 바탕으로 의료기관, 119, 보건소 등 공적 창구에 문의하세요.',
       sourceAction
     ];
 
     if (requiresEmergencyEscalation) {
-      actions.unshift('호흡곤란, 경련, 의식 저하, 119가 필요한 상황처럼 긴급 신호가 있으면 즉시 119 안내를 우선 확인하세요.');
+      actions.unshift('호흡곤란, 경련, 의식 저하, 119가 필요한 상황처럼 긴급 신호가 있으면 즉시 119에 신고 또는 전화하거나 의료기관에 연락하세요.');
     }
 
     return actions;
