@@ -526,16 +526,40 @@ textarea:focus-visible {
   .shell-header {
     align-items: stretch;
     display: grid;
+    gap: 12px;
+    padding-bottom: 12px;
+  }
+
+  .brand-block h1 {
+    font-size: 1.42rem;
+  }
+
+  .eyebrow {
+    font-size: 0.72rem;
+    margin-bottom: 3px;
   }
 
   .tab-list {
     display: grid;
+    gap: 6px;
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .tab-button {
+    gap: 6px;
     justify-content: center;
+    min-height: 40px;
+    padding: 6px 8px;
     text-align: center;
+  }
+
+  .tab-button strong {
+    font-size: 0.82rem;
+  }
+
+  .tab-button svg {
+    height: 16px;
+    width: 16px;
   }
 
   .tab-button small {
@@ -565,19 +589,19 @@ textarea:focus-visible {
   }
 
   .shell-header {
-    gap: 12px;
-    padding-bottom: 8px;
+    gap: 8px;
+    padding-bottom: 6px;
   }
 
   .brand-block h1 {
-    font-size: 1.58rem;
-    line-height: 1.12;
+    font-size: 1.34rem;
+    line-height: 1.1;
   }
 
   .eyebrow {
-    font-size: 0.76rem;
+    font-size: 0.72rem;
     letter-spacing: 0;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     text-transform: none;
   }
 
@@ -624,10 +648,10 @@ textarea:focus-visible {
     border-radius: 8px;
     color: #4a5960;
     display: grid;
-    gap: 4px;
+    gap: 3px;
     justify-items: center;
-    min-height: 58px;
-    padding: 7px 4px;
+    min-height: 48px;
+    padding: 5px 4px;
     text-align: center;
   }
 
